@@ -11,33 +11,20 @@
 #include <map>
 #include <string>
 #include "PTZUnit.h"
+#include "Packet.h"
 class PTZUnit;
 class PTZSImulator {
 
-    struct command{
-        uint8_t cmd;
-        uint8_t perihpheral;
-        uint8_t function;
-        uint8_t action;
-        uint64_t time_stamp;
-    };
-    struct feedback{
-        uint8_t feedback;
-        uint8_t cmd;
-        uint8_t perihpheral;
-        uint8_t function;
-        uint8_t action;
-        float data;
-        uint64_t time_stamp;
-    };
+
 
 private:
     enum WarningLevel{ERROR,WARNING,INFORMATION};
     std::vector<PTZUnit> PTZs ;
     std::vector<std::pair<std::thread,int >> clientConnectionsThreads;
-    std::queue<std::pair<int,command>> commandQueue;
-    //std::map<std::string, void(PTZSImulator::*fn)(std::string)> reflection;
+    std::queue<std::pair<int,Packet::pktCommand>> commandQueue;
+    std::vector<std::thread> PTZEnginesThreads;
     std::thread executionThread;
+    std::thread waitForConnectionThread;
     int numberOfPTZs;
     int socketListenQueueSize;
     int currentUnit;
@@ -63,12 +50,12 @@ public:
     void initSocket();
     void receiveLoop(int fd) ;
     void WaitForConnection();
-    void enqueue(int fd,PTZSImulator::command cmd) ;
-    PTZSImulator::command dequeue();
-    std::pair<int ,PTZSImulator::command> deqeueu();
+    void enqueue(int fd,Packet::pktCommand cmd) ;
+    Packet::pktCommand dequeue();
+    std::pair<int ,Packet::pktCommand> deqeueu();
     void executionLoop();
-    PTZSImulator::feedback parse(PTZSImulator::command);
-    void response(int fd , PTZSImulator::feedback pkt);
+    Packet::pktFeedback parse(Packet::pktCommand);
+    void response(int fd , Packet::pktFeedback * pkt);
     void log(char * msg, char *  location , PTZSImulator::WarningLevel level);
 
 

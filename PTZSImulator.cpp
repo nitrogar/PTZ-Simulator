@@ -10,18 +10,21 @@
 #include <stdio.h>
 #include "PTZUnit.h"
 #include <unistd.h>
-
-
+#include <iostream>
+#include <utility>
 void PTZSImulator::addPTZ(float filedOfView, float azimuthRotation, float azimuthRotationSpeed, float elevationRotation,
                           float elevationRotationSpeed, float lat, float lon) {
     PTZUnit u(filedOfView, azimuthRotation, azimuthRotationSpeed, elevationRotation, elevationRotationSpeed, lat, lon);
     this->PTZs.push_back(u);
+    PTZUnit * PTZThis = &PTZs[this->numberOfPTZs];
+    this->PTZEnginesThreads.push_back(std::thread(&PTZUnit::runLoop,PTZThis));
     this->numberOfPTZs++;
+    int t = 0;
 
 }
 
 void PTZSImulator::run() {
-
+    while(true);
 }
 
 void PTZSImulator::loadXML(std::string &filename) {
@@ -30,7 +33,7 @@ void PTZSImulator::loadXML(std::string &filename) {
 
 
 
-void PTZSImulator::enqueue(int fd ,PTZSImulator::command cmd) {
+void PTZSImulator::enqueue(int fd ,Packet::pktCommand cmd) {
     this->commandQueue.push(std::make_pair(fd,cmd));
 
 }
@@ -67,14 +70,15 @@ void PTZSImulator::initSocket() {
     log("Finish Socket Initialization","PTZSImulator::initSocket",WarningLevel::INFORMATION);
 }
 
-PTZSImulator::command PTZSImulator::dequeue() {
-    return PTZSImulator::command();
+Packet::pktCommand PTZSImulator::dequeue() {
+    return Packet::pktCommand();
 }
 
 void PTZSImulator::initSimulator() {
+    std::cout << sizeof(Packet::pktFeedback) << "--" << sizeof(Packet::pktCommand) << std::endl;
     initSocket();
     this->executionThread = std::thread(&PTZSImulator::executionLoop,this);
-    WaitForConnection();
+    this->waitForConnectionThread = std::thread(&PTZSImulator::WaitForConnection,this);
 
 
 
@@ -95,20 +99,20 @@ void PTZSImulator::log(char *  msg, char * location, WarningLevel level) {
     }
 
     printf("%s -- (%s)\n",msg,location);
-    if(level == WarningLevel::ERROR) exit(1);
+  //  if(level == WarningLevel::ERROR) exit(1);
 }
 
 void PTZSImulator::executionLoop() {
     log("Thread Starts","PTZSImulator::executeCommand",WarningLevel::INFORMATION);
-    std::pair<int , PTZSImulator::command> packet ;
-    PTZSImulator::command cmd;
-    PTZSImulator::feedback feedback;
+    std::pair<int , Packet::pktCommand> packet ;
+    Packet::pktCommand cmd;
+    Packet::pktFeedback  feedback;
     while(this->simulationON){
         if(this->commandQueue.size() == 0) continue;
         packet = this->deqeueu();
         cmd = packet.second;
         feedback = this->parse(cmd);
-        this->response(packet.first,feedback);
+        this->response(packet.first,&feedback);
 
 
 
@@ -117,7 +121,7 @@ void PTZSImulator::executionLoop() {
     }
 }
 
-std::pair<int ,PTZSImulator::command> PTZSImulator::deqeueu() {
+std::pair<int ,Packet::pktCommand> PTZSImulator::deqeueu() {
     auto x = this->commandQueue.front();
     this->commandQueue.pop();
     return x;
@@ -150,20 +154,23 @@ void PTZSImulator::WaitForConnection() {
     }
 }
 
-PTZSImulator::PTZSImulator(){
+PTZSImulator::PTZSImulator():PTZEnginesThreads(0),PTZs(0){
     this->socketListenQueueSize = 10;
     this->currentUnit = 0;
     this->listenAddress = "127.0.0.1";
-    this->listenPort = 7711;
+    this->listenPort = 7721;
     this->receiveConnectionOn = 1;
     this->simulationON = 1;
+    this->numberOfPTZs = 0;
 
 }
 
 void PTZSImulator::receiveLoop(int fd) {
-    PTZSImulator::command cmd = {0};
+    Packet::pktCommand cmd = {0};
     while(read( fd , (char*)&cmd, sizeof(cmd)) > 0){
         log("Recive Packet","PTZSImulator::receiveLoop",WarningLevel::INFORMATION);
+        cmd.cmd = reinterpret_cast<uint8_t >(cmd.cmd);
+
         this->enqueue(fd,cmd);
 
     }
@@ -172,12 +179,80 @@ void PTZSImulator::receiveLoop(int fd) {
     close(fd);
 }
 
-PTZSImulator::feedback PTZSImulator::parse(PTZSImulator::command) {
-    return PTZSImulator::feedback();
+Packet::pktFeedback  PTZSImulator::parse(Packet::pktCommand cmd) {
+    Packet::pktFeedback fed = {};
+    unsigned char PTZIndex = cmd.peripheral - 1;
+    float data = 0;
+    switch (cmd.cmd){
+        case Packet::Command::READ :
+           switch (cmd.peripheral_function){
+               case Packet::PeripheralFunction::INFORMATION:
+                   switch (cmd.action){
+                       case Packet::Action::ELEVATION:
+                           data = PTZs[PTZIndex].getElevationRotation();
+                           break;
+                       case Packet::Action::AZIMUTH :
+                           data = PTZs[PTZIndex].getAzimuthRotation();
+                           break;
+                       case Packet::Action::NUMBER_OF_PTZ :
+                           data = PTZs.size();
+                           break;
+                       case Packet::Action::LATITUDE :
+                           data = PTZs[PTZIndex].getLat();
+                           break;
+                       case Packet::Action::LONGITUDE:
+                           data = PTZs[PTZIndex].getLon();
+                           break;
+                       case Packet::Action::AZIMUTH_SPEED:
+                           data = PTZs[PTZIndex].getAzimuthRotationSpeed();
+                           break;
+                       case Packet::Action::ELEVATION_SPEED:
+                           data = PTZs[PTZIndex].getElevationRotationSpeed();
+                           break;
+                       case Packet::Action::ELEVATION_SPEED_FACTOR:
+                           data = PTZs[PTZIndex].getElevationSpeedFactor();
+                           break;
+                       case Packet::Action::AZIMUTH_SPEED_FACTOR :
+                           data = data = PTZs[PTZIndex].getAzimuthSpeedFactor();
+                           break;
+                       default:
+                           log("Error defected packet Read/Peripheral_Function/Action Unknown" , "PTZSimulator::parse",WarningLevel::WARNING);
+
+                   }
+                   break;
+               default:
+                   log("Error defected packet Read/Peripheral_Function Unknown" , "PTZSimulator::parse",WarningLevel::WARNING);
+           }
+            break;
+        case Packet::Command::MOVE :
+            switch (cmd.peripheral_function){
+                case Packet::PeripheralFunction::ELEVATION :
+                    PTZs[PTZIndex].setElevationSpeedFactor(cmd.action);
+                    break;
+                case Packet::PeripheralFunction::AZIMUTH:
+                    PTZs[PTZIndex].setAzimuthSpeedFactor(cmd.action);
+                    break;
+                default:
+                    log("Error defected MOVE/Peripheral_Function Unknown" , "PTZSimulator::parse",WarningLevel::WARNING);
+
+            }
+            break;
+        default:
+            log("Error defected packet Command Unknown" , "PTZSimulator::parse",WarningLevel::WARNING);
+    }
+    fed.cmd = cmd.cmd;
+    fed.peripheral = cmd.peripheral;
+    fed.peripheral_function = cmd.peripheral_function;
+    fed.action = cmd.action;
+    fed.data = data;
+    fed.feedback = Packet::Feedback::FLAG;
+
+
+    return fed;
 }
 
-void PTZSImulator::response(int fd, PTZSImulator::feedback pkt) {
-
+void PTZSImulator::response(int fd, Packet::pktFeedback  * pkt) {
+    send(fd,pkt, sizeof(Packet::pktFeedback),0);
 }
 
 
