@@ -33,6 +33,7 @@ private:
     int simulationON;
     int receiveConnectionOn;
     int mainSocketFd;
+    int tick = 100;
     std::string listenAddress;
 
     /*
@@ -43,7 +44,7 @@ private:
 
 public:
     PTZSImulator();
-    void addPTZ(float filedOfView, float azimuthRotation, float azimuthRotationSpeed, float elevationRotation,float elevationRotationSpeed, float lat, float lon);
+    void addPTZ(float filedOfView, float azimuthRotation, float azimuthRotationSpeed, float elevationRotation,float elevationRotationSpeed, float lat, float lon,float alt,float range,float phi,float refs);
     void run();
     void initSimulator();
     void loadXML(std::string & filename);

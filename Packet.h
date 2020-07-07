@@ -25,7 +25,10 @@ namespace Packet {
         const char AZIMUTH_SPEED = 0x7;
         const char ELEVATION_SPEED_FACTOR = 0x8;
         const char AZIMUTH_SPEED_FACTOR = 0x9;
-
+        const char RANGE = 0x10;
+        const char PHI = 0x11;
+        const char ALTITUDE = 0x12;
+        const char REF_FROM_NORTH = 0x13;
     }
 
     namespace  Feedback {

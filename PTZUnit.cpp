@@ -78,15 +78,17 @@ int PTZUnit::saveInXML(std::string &filename) const {
 }
 
 
-PTZUnit::PTZUnit(float filedOfView, float azimuthRotation, float azimuthRotationSpeed, float elevationRotation,
-                 float elevationRotationSpeed, float lat, float lon) : FiledOfView(filedOfView),
+PTZUnit::PTZUnit(int id ,float filedOfView, float azimuthRotation, float azimuthRotationSpeed, float elevationRotation,
+                 float elevationRotationSpeed, float lat, float lon,float alt,float range,float phi,float ref) : FiledOfView(filedOfView),
                                                                        AzimuthRotation(azimuthRotation),
                                                                        AzimuthRotationSpeed(azimuthRotationSpeed),
                                                                        ElevationRotation(elevationRotation),
                                                                        ElevationRotationSpeed(elevationRotationSpeed),
                                                                        lat(lat), lon(lon),speedDividerElevation(0),
                                                                        speedDividerAzimuth(0),azimuthMotorOn(true),
-                                                                       elevationMotorOn(true){this->tick=100;}
+                                                                       elevationMotorOn(true),id(id),alt(alt),range(range),
+                                                                       refWithNorth(ref),phi(phi)
+                                                                       {this->tick=1000;}
 
 PTZUnit::PTZUnit(){}
 
@@ -114,26 +116,56 @@ void PTZUnit::log(char *  msg, char * location, WarningLevel level) {
     printf("%s -- (%s)\n",msg,location);
     if(level == WarningLevel::ERROR) exit(1);
 }
-void PTZUnit::runLoop() {
-    log("Starting PTZ thread" , "PTZUnit::runLoop",WarningLevel::INFORMATION);
+void PTZUnit::runSimulation(float timeElapsed) {
+    //log("Starting PTZ thread" , "PTZUnit::runLoop",WarningLevel::INFORMATION);
     //std::chrono::duration<float, std::milli> delta ;
     //auto past = std::chrono::system_clock::now().time_since_epoch();
-    while(true) {
+   // while(true) {
      //   if (delta.count() > 100) {
            //past = std::chrono::system_clock::now().time_since_epoch();
-            if (elevationMotorOn && speedDividerElevation != 0) {
-                this->ElevationRotation = fmod((this->ElevationRotation +(this->tick / 1000.0f) * this->ElevationRotationSpeed *(1.0f / this->speedDividerElevation)), 360.0f);
-            }
+            if (elevationMotorOn && this->getElevationSpeedFactor()!= 0)
+                this->setElevationRotation(fmod((this->getElevationRotation() +(timeElapsed / 1000.0f) * this->getElevationRotationSpeed() *(1.0f / this->getElevationSpeedFactor())), 360.0f));
+
             if (azimuthMotorOn && speedDividerAzimuth != 0)
-                this->AzimuthRotation = fmod((this->AzimuthRotation + (this->tick / 1000.0f) * this->AzimuthRotationSpeed * (1.0f / this->speedDividerAzimuth)) , 360.0f);
+                this->AzimuthRotation = fmod((this->AzimuthRotation + (timeElapsed / 1000.0f) * this->AzimuthRotationSpeed * (1.0f / this->speedDividerAzimuth)) , 360.0f);
           //  std::cout << "Time elabsed " << delta.count()<< std::endl;
 
        // }
        // delta = std::chrono::system_clock::now().time_since_epoch() - past;
-      // std::cout << "Elevatin : " << this->ElevationRotation << " Azimuth : " << this->AzimuthRotation << std::endl;
-       //std::cout << "elavationInfo : " << elevationMotorOn << " - " << +speedDividerElevation << " AzimuthInfo : " <<  azimuthMotorOn << " - "<< +speedDividerAzimuth << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(this->tick));
-    }
+        //std::cout << "elavationInfo : " << elevationMotorOn << " - " << +speedDividerElevation << " AzimuthInfo : " <<  azimuthMotorOn << " - "<< +speedDividerAzimuth << std::endl;
+   // }
+}
+
+volatile float PTZUnit::getAlt() const {
+    return alt;
+}
+
+void PTZUnit::setAlt(volatile float alt) {
+    this->alt = alt;
+}
+
+volatile float PTZUnit::getPhi() const {
+    return phi;
+}
+
+void PTZUnit::setPhi(volatile float phi) {
+    this->phi = phi;
+}
+
+volatile float PTZUnit::getRange() const {
+    return range;
+}
+
+void PTZUnit::setRange(volatile float range) {
+    this->range = range;
+}
+
+volatile float PTZUnit::getRefWithNorth() const {
+    return refWithNorth;
+}
+
+void PTZUnit::setRefWithNorth(volatile float refWithNorth) {
+    this->refWithNorth = refWithNorth;
 }
 
 
