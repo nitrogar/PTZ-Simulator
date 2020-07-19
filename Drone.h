@@ -34,7 +34,8 @@ public:
     void setZVec(double zVec);
     void caculateNextLocation();
     void runSimulation(int tick);
-    void calculateEndLocation(location * l , Vector * vel );
+    void setUnitVector(Vector * unit);
+    location calculateEndLocation(location * l , Vector * vel,double tick );
     Drone(double latitude, double longitude, double altitude);
     Drone(double latitude, double longitude, double altitude, double xVec, double yVec, double zVec);
     Drone();
@@ -45,7 +46,8 @@ public:
 private:
 
     location current;
-    Vector velocity;
+    Vector velocity = {0,0,0};
+    Vector max_vel = {10,10,10};
 
 
 };

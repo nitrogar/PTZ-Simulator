@@ -88,7 +88,10 @@ PTZUnit::PTZUnit(int id ,float filedOfView, float azimuthRotation, float azimuth
                                                                        speedDividerAzimuth(0),azimuthMotorOn(true),
                                                                        elevationMotorOn(true),id(id),alt(alt),range(range),
                                                                        refWithNorth(ref),phi(phi)
-                                                                       {this->tick=1000;}
+                                                                       {this->tick=1000;this->targetAngelElevation=ElevationRotation;
+                                                                       this->targetAngelAzimuth=AzimuthRotation;
+                                                                       this->speedDividerAzimuth = 1;
+                                                                       this->speedDividerElevation = 1;}
 
 PTZUnit::PTZUnit(){}
 
@@ -117,23 +120,26 @@ void PTZUnit::log(char *  msg, char * location, WarningLevel level) {
     if(level == WarningLevel::ERROR) exit(1);
 }
 void PTZUnit::runSimulation(float timeElapsed) {
-    //log("Starting PTZ thread" , "PTZUnit::runLoop",WarningLevel::INFORMATION);
-    //std::chrono::duration<float, std::milli> delta ;
-    //auto past = std::chrono::system_clock::now().time_since_epoch();
-   // while(true) {
-     //   if (delta.count() > 100) {
-           //past = std::chrono::system_clock::now().time_since_epoch();
-            if (elevationMotorOn && this->getElevationSpeedFactor()!= 0)
-                this->setElevationRotation(fmod((this->getElevationRotation() +(timeElapsed / 1000.0f) * this->getElevationRotationSpeed() *(1.0f / this->getElevationSpeedFactor())), 360.0f));
+          //  std::cout << "id : " << id << " Target Az : " << targetAngelAzimuth << " Target El " << targetAngelElevation << std::endl;
+            if (elevationMotorOn && this->getElevationSpeedFactor()!= 0){
+                if(abs(this->ElevationRotation - this->targetAngelElevation) > 0.01)
+                    if(this->ElevationRotation < this->targetAngelElevation)
+                        this->setElevationRotation(fmod((this->getElevationRotation() +(timeElapsed / 1000.0f) * this->getElevationRotationSpeed() *(1.0f / this->getElevationSpeedFactor())), 360.0f));
+                    else if( this->ElevationRotation > this->targetAngelElevation)
+                        this->setElevationRotation(fmod((this->getElevationRotation() -(timeElapsed / 1000.0f) * this->getElevationRotationSpeed() *(1.0f / this->getElevationSpeedFactor())), 360.0f));
 
-            if (azimuthMotorOn && speedDividerAzimuth != 0)
-                this->AzimuthRotation = fmod((this->AzimuthRotation + (timeElapsed / 1000.0f) * this->AzimuthRotationSpeed * (1.0f / this->speedDividerAzimuth)) , 360.0f);
-          //  std::cout << "Time elabsed " << delta.count()<< std::endl;
 
-       // }
-       // delta = std::chrono::system_clock::now().time_since_epoch() - past;
-        //std::cout << "elavationInfo : " << elevationMotorOn << " - " << +speedDividerElevation << " AzimuthInfo : " <<  azimuthMotorOn << " - "<< +speedDividerAzimuth << std::endl;
-   // }
+
+            }
+            if (azimuthMotorOn && speedDividerAzimuth != 0){
+                if(abs(this->AzimuthRotation - this->targetAngelAzimuth) > 0.01)
+                    if(this->AzimuthRotation < this->targetAngelAzimuth)
+                        this->AzimuthRotation = fmod((this->AzimuthRotation + (timeElapsed / 1000.0f) * this->AzimuthRotationSpeed * (1.0f / this->speedDividerAzimuth)) , 360.0f);
+                    else if( this->AzimuthRotation > this->targetAngelAzimuth)
+                        this->AzimuthRotation = fmod((this->AzimuthRotation - (timeElapsed / 1000.0f) * this->AzimuthRotationSpeed * (1.0f / this->speedDividerAzimuth)) , 360.0f);
+
+            }
+
 }
 
 volatile float PTZUnit::getAlt() const {
@@ -166,6 +172,77 @@ volatile float PTZUnit::getRefWithNorth() const {
 
 void PTZUnit::setRefWithNorth(volatile float refWithNorth) {
     this->refWithNorth = refWithNorth;
+}
+
+
+float PTZUnit::getTargetAngelAzimuth() const {
+    return targetAngelAzimuth;
+}
+
+void PTZUnit::setTargetAngelAzimuth(float targetAngelAzimuth) {
+    PTZUnit::targetAngelAzimuth = targetAngelAzimuth;
+}
+
+float PTZUnit::getTargetAngelElevation() const {
+    return targetAngelElevation;
+}
+
+void PTZUnit::setTargetAngelElevation(float targetAngelElevation) {
+    PTZUnit::targetAngelElevation = targetAngelElevation;
+}
+
+void PTZUnit::addTargetElevationLower(char ang) {
+    float fang = (float) ang;
+    fang = fang / 100;
+    this->targetAngelElevation += fang;
+}
+
+void PTZUnit::addTargetElevationUpper(char ang) {
+    float fang = (float) ang;
+    this->targetAngelElevation += fang;
+}
+
+void PTZUnit::setTargetElevationLower(char ang) {
+    int top = (int) this->targetAngelElevation;
+    float lower = (float)ang;
+    lower = lower/100;
+    this->targetAngelElevation = (float)top + lower;
+}
+
+void PTZUnit::setTargetElevationUpper(char ang) {
+    int top = (float) ang;
+    float lower = (float)(this->targetAngelElevation - (int) this->targetAngelElevation);
+
+    this->targetAngelElevation = top + lower;
+
+}
+
+void PTZUnit::addTargetAzimuthLower(char ang) {
+    float fang = (float) ang;
+    fang = fang / 100;
+    this->targetAngelAzimuth += ang;
+}
+
+void PTZUnit::addTargetAzimuthUpper(char ang) {
+    float fang = (float) ang;
+   // std::cout << fang << std::endl;
+    this->targetAngelAzimuth += fang;
+}
+
+void PTZUnit::setTargetAzimuthLower(char ang) {
+    int top = (int) this->targetAngelAzimuth;
+    float lower = (float)ang;
+    lower = lower/100;
+
+
+    this->targetAngelAzimuth = (float)top + lower;
+}
+
+void PTZUnit::setTargetAzimuthUpper(char ang) {
+    int top = (float) ang;
+    float lower = (float)(this->targetAngelAzimuth - (int) this->targetAngelAzimuth);
+
+    this->targetAngelAzimuth = top + lower;
 }
 
 

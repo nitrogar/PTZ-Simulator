@@ -13,6 +13,7 @@
 #include <iostream>
 #include <utility>
 #include <atomic>
+#include "Drone.h"
 void PTZSImulator::addPTZ(float filedOfView, float azimuthRotation, float azimuthRotationSpeed, float elevationRotation,
                           float elevationRotationSpeed, float lat, float lon,float alt,float range,float phi,float ref) {
     PTZUnit u(this->PTZs.size(),filedOfView, azimuthRotation, azimuthRotationSpeed, elevationRotation, elevationRotationSpeed, lat, lon,alt, range, phi, ref);
@@ -31,6 +32,7 @@ void PTZSImulator::run() {
         for(int i = 0; i < PTZs.size() ; i++){
             PTZs[i].runSimulation(this->tick);
         }
+        drones[0].runSimulation(this->tick);
         std::this_thread::sleep_for(std::chrono::milliseconds(this->tick));
     };
 }
@@ -87,6 +89,7 @@ void PTZSImulator::initSimulator() {
     initSocket();
     this->executionThread = std::thread(&PTZSImulator::executionLoop,this);
     this->waitForConnectionThread = std::thread(&PTZSImulator::WaitForConnection,this);
+    this->droneInputThread = std::thread(& PTZSImulator::droneInput,this);
 
 
 
@@ -94,7 +97,7 @@ void PTZSImulator::initSimulator() {
 
 }
 
-void PTZSImulator::log(char *  msg, char * location, WarningLevel level) {
+void PTZSImulator::log(const char *  msg, const char * location, WarningLevel level) {
     switch (level){
         case WarningLevel::INFORMATION :
             printf("[#] ");
@@ -116,7 +119,7 @@ void PTZSImulator::executionLoop() {
     Packet::pktCommand cmd;
     Packet::pktFeedback  feedback;
     while(this->simulationON){
-        if(this->commandQueue.size() == 0) continue;
+        if(this->commandQueue.empty()) continue;
         packet = this->deqeueu();
         cmd = packet.second;
         feedback = this->parse(cmd);
@@ -159,10 +162,10 @@ void PTZSImulator::WaitForConnection() {
 }
 
 PTZSImulator::PTZSImulator():PTZEnginesThreads(0),PTZs(0){
-    this->socketListenQueueSize = 10;
+    this->socketListenQueueSize = 100;
     this->currentUnit = 0;
     this->listenAddress = "127.0.0.1";
-    this->listenPort = 7766;
+    this->listenPort = 8888;
     this->receiveConnectionOn = 1;
     this->simulationON = 1;
     this->numberOfPTZs = 0;
@@ -236,6 +239,21 @@ Packet::pktFeedback  PTZSImulator::parse(Packet::pktCommand cmd) {
                            data = data = PTZs[PTZIndex].getRefWithNorth();
                            break;
 
+                       case Packet::Action::FOV:
+                           data = PTZs[PTZIndex].getFiledOfView();
+                           break;
+
+                       case Packet::Action::GET_TARGET_AZIMUTH :
+                           data = PTZs[PTZIndex].getTargetAngelAzimuth();
+                           break;
+
+
+                       case Packet::Action::GET_TARGET_ELEVATION :
+                           data = data = PTZs[PTZIndex].getTargetAngelElevation();
+                           break;
+
+
+
                        default:
                            log("Error defected packet Read/Peripheral_Function/Action Unknown" , "PTZSimulator::parse",WarningLevel::WARNING);
 
@@ -258,8 +276,87 @@ Packet::pktFeedback  PTZSImulator::parse(Packet::pktCommand cmd) {
 
             }
             break;
+        case Packet::Command::DRONE :
+            switch (cmd.peripheral_function){
+                case Packet::PeripheralFunction::INFORMATION :
+                    switch (cmd.action){
+                        case Packet::Action::LATITUDE:
+                            data = drones[0].getLatitude();
+                            break;
+                        case Packet::Action::LONGITUDE:
+                            data = drones[0].getLongitude();
+                            break;
+                        case Packet::Action::ALTITUDE:
+                            data = drones[0].getAltitude();
+                            break;
+                        case Packet::Action::XVEL:
+                            data = drones[0].getXVec();
+                            break;
+
+                        case Packet::Action::YVEL:
+                            data = drones[0].getYVec();
+                            break;
+
+                        case Packet::Action::ZVEL:
+                            data = drones[0].getZVec();
+                            break;
+
+                        default:
+                            printf("Command = %d\n",cmd.action);
+                            log("Error defected DRONE/Action Unknown" , "PTZSimulator::parse",WarningLevel::WARNING);
+                    }
+                    break;
+                default:
+                    printf("Command = %d\n",cmd.peripheral_function);
+                    log("Error defected DRONE/Peripheral_Function Unknown" , "PTZSimulator::parse",WarningLevel::WARNING);
+            }
+            break;
+
+        case Packet::Command::WRITE :
+            switch(cmd.peripheral_function){
+                case Packet::PeripheralFunction::SET_TARGET_AZIMUTH_LOWER :
+                    PTZs[PTZIndex].setTargetAzimuthLower(cmd.action);
+                 //   log("SET Azimuth Lower ", __FUNCTION__ , INFORMATION);
+                    break;
+
+                case Packet::PeripheralFunction::SET_TARGET_AZIMUTH_UPPER :
+                    PTZs[PTZIndex].setTargetAzimuthUpper(cmd.action);
+                 //   log("SET Azimuth Upper ", __FUNCTION__ , INFORMATION);
+                    break;
+
+                case Packet::PeripheralFunction::ADD_TARGET_AZIMUTH_LOWER :
+                    PTZs[PTZIndex].addTargetAzimuthLower(cmd.action);
+                 //   log("ADD Azimuth Lower ", __FUNCTION__ , INFORMATION);
+                    break;
+
+                case Packet::PeripheralFunction::ADD_TARGET_AZIMUTH_UPPER :
+                    PTZs[PTZIndex].addTargetAzimuthUpper(cmd.action);
+                  //  log("ADD Azimuth Upper ", __FUNCTION__ , INFORMATION);
+                    break;
+
+                case Packet::PeripheralFunction::SET_TARGET_ELEVATION_LOWER :
+                    PTZs[PTZIndex].setTargetElevationLower(cmd.action);
+                //    log("SET Elevation Lower ", __FUNCTION__ , INFORMATION);
+                    break;
+
+                case Packet::PeripheralFunction::SET_TARGET_ELEVATION_UPPER :
+                    PTZs[PTZIndex].setTargetElevationUpper(cmd.action);
+                 //   log("SET Elevation Upper ", __FUNCTION__ , INFORMATION);
+                    break;
+
+                case Packet::PeripheralFunction::ADD_TARGET_ELEVATION_LOWER :
+                    PTZs[PTZIndex].addTargetElevationLower(cmd.action);
+                //    log("ADD Elevation Lower ", __FUNCTION__ , INFORMATION);
+                    break;
+
+                case Packet::PeripheralFunction::ADD_TARGET_ELEVATION_UPPER :
+                    PTZs[PTZIndex].addTargetElevationUpper(cmd.action);
+                 //   log("ADD Elevation Upper ", __FUNCTION__ , INFORMATION);
+                    break;
+            }
+            break;
         default:
-            printf("Command = %f",cmd.cmd);
+            printf("Command = %d\n",cmd.cmd);
             log("Error defected packet Command Unknown" , "PTZSimulator::parse",WarningLevel::WARNING);
     }
     fed.cmd = cmd.cmd;
@@ -275,6 +372,54 @@ Packet::pktFeedback  PTZSImulator::parse(Packet::pktCommand cmd) {
 
 void PTZSImulator::response(int fd, Packet::pktFeedback  * pkt) {
     send(fd,pkt, sizeof(Packet::pktFeedback),0);
+}
+
+void PTZSImulator::addDrone(double lat, double lng, double alt) {
+    Drone d(lat,lng,alt);
+    drones.push_back(d);
+}
+
+void PTZSImulator::droneInput() {
+    struct sockaddr_in address, clientInfo;
+    int opt = 1;
+    int addrlen = sizeof(struct sockaddr_in);
+    int fd , new_socket;
+    Drone::Vector vec = {0,0,0};
+    // Creating socket file descriptor
+    if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+    {
+        log("socket failed","PTZSImulator::droneInput",WarningLevel::ERROR);
+    }
+
+    // Forcefully attaching socket to the port 8080
+
+    address.sin_family = AF_INET;
+    if(inet_pton(AF_INET, this->listenAddress.c_str(), &address.sin_addr)<=0)
+    {
+        log("Invalid Address","PTZSImulator::droneInput",WarningLevel::ERROR);
+    }
+    address.sin_port = htons(5544);
+
+    if (bind(fd, (struct sockaddr *)&address,sizeof(address))<0)
+    {
+        log("Bind Error","PTZSImulator::droneInput",WarningLevel::ERROR);
+    }
+    if (listen(fd, 100) < 0)
+    {
+        log("Error While Listening","PTZSImulator::droneInput",WarningLevel::ERROR);
+    }
+    while (1){
+    if((new_socket = accept(fd, (struct sockaddr *)&clientInfo,(socklen_t*)&addrlen))<0)
+    {
+        log("Cant Accept Connection","PTZSImulator::DroneInput",WarningLevel::ERROR);
+    }
+
+    std::cout << "Accept " << std::endl;
+    while(read( new_socket , (char*)&vec, sizeof(vec)) > 0){
+        this->drones[0].setUnitVector(&vec);
+    }
+    }
+    log("End of Controller Connection","PTZSImulator::droneInput",WarningLevel::INFORMATION);
 }
 
 

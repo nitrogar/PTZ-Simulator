@@ -39,17 +39,43 @@ public:
 private:
     int id;
     int tick;
-    volatile  float FiledOfView;
-    volatile  float AzimuthRotation;
-    volatile  float AzimuthRotationSpeed;
-    volatile  float ElevationRotation;
-    volatile  float ElevationRotationSpeed;
-    volatile  float lat;
-    volatile  float lon;
-    volatile  float alt;
-    volatile  float phi;
-    volatile  float range;
-    volatile  float refWithNorth;
+    float FiledOfView;
+    float AzimuthRotation;
+    float AzimuthRotationSpeed;
+    float ElevationRotation;
+    float ElevationRotationSpeed;
+    float lat;
+    float lon;
+    float alt;
+    float phi;
+    float range;
+    float refWithNorth;
+    float targetAngelAzimuth;
+    float targetAngelElevation;
+public:
+    float getTargetAngelAzimuth() const;
+
+    void setTargetAngelAzimuth(float targetAngelAzimuth);
+
+    float getTargetAngelElevation() const;
+
+    void setTargetAngelElevation(float targetAngelElevation);
+
+public:
+    float getTargetAngel() const;
+
+    void setTargetAngel(float targetAngel);
+    void addTargetElevationLower(char ang);
+    void addTargetElevationUpper(char ang);
+    void setTargetElevationLower(char ang);
+    void setTargetElevationUpper(char ang);
+
+    void addTargetAzimuthLower(char ang);
+    void addTargetAzimuthUpper(char ang);
+    void setTargetAzimuthLower(char ang);
+    void setTargetAzimuthUpper(char ang);
+
+
 public:
     volatile float getRefWithNorth() const;
 
