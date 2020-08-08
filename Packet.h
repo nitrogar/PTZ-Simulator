@@ -25,6 +25,19 @@ namespace Packet {
         const char SET_TARGET_ELEVATION_LOWER = 0x9;
         const char ADD_TARGET_ELEVATION_UPPER = 0x10;
         const char ADD_TARGET_ELEVATION_LOWER = 0x11;
+        const char LOAD_TARGET_AZIMUTH = 0x12;
+        const char LOAD_TARGET_ELEVATION = 0x13;
+        const char SET_AZIMUTH_SPEED_FACTOR = 0x14;
+        const char SET_ELEVATION_SPEED_FACTOR = 0x15;
+
+
+        const char SET_ELEVATION_SPEED_UPPER = 0x16;
+        const char SET_ELEVATION_SPEED_LOWER = 0x17;
+        const char SET_AZIMUTH_SPEED_UPPER = 0x18;
+        const char SET_AZIMUTH_SPEED_LOWER = 0x19;
+        const char LOAD_SPEED_AZIMUTH = 0x1a;
+        const char LOAD_SPEED_ELEVATION = 0x1b;
+
     }
     namespace Action{
 

@@ -35,7 +35,36 @@ public:
     void setLon(float lon);
     void log(char *  msg, char * location, WarningLevel level);
     void runSimulation(float timeElapsed);
+    void loadAzimuth();
+    void loadElevation();
 
+    float getTargetAngelAzimuth() const;
+    void setTargetAngelAzimuth(float targetAngelAzimuth);
+    float getTargetAngelElevation() const;
+    void setTargetAngelElevation(float targetAngelElevation);
+    void addTargetElevationLower(char ang);
+    void addTargetElevationUpper(char ang);
+    void setTargetElevationLower(char ang);
+    void setTargetElevationUpper(char ang);
+    void addTargetAzimuthLower(char ang);
+    void addTargetAzimuthUpper(char ang);
+    void setTargetAzimuthLower(char ang);
+    void setTargetAzimuthUpper(char ang);
+    volatile float getRefWithNorth() const;
+    void setRefWithNorth(volatile float refWithNorth);
+    volatile float getAlt() const;
+    void setAlt(volatile float alt);
+    volatile float getPhi() const;
+    void setPhi(volatile float phi);
+    volatile float getRange() const;
+    void setRange(volatile float range);
+
+    void loadAzimuthSpeed();
+    void loadElevationSpeed();
+    void setAzimuthSpeedLower(char sp);
+    void setAzimuthSpeedUpper(char sp);
+    void setElevationSpeedLower(char sp);
+    void setElevationSpeedUpper(char sp);
 private:
     int id;
     int tick;
@@ -52,49 +81,14 @@ private:
     float refWithNorth;
     float targetAngelAzimuth;
     float targetAngelElevation;
-public:
-    float getTargetAngelAzimuth() const;
+    float targetAngelAzimuth2;
+    float targetAngelElevation2;
 
-    void setTargetAngelAzimuth(float targetAngelAzimuth);
+    float SpeedAzimuth;
+    float SpeedElevation;
+    float SpeedAzimuth2;
+    float SpeedElevation2;
 
-    float getTargetAngelElevation() const;
-
-    void setTargetAngelElevation(float targetAngelElevation);
-
-public:
-    float getTargetAngel() const;
-
-    void setTargetAngel(float targetAngel);
-    void addTargetElevationLower(char ang);
-    void addTargetElevationUpper(char ang);
-    void setTargetElevationLower(char ang);
-    void setTargetElevationUpper(char ang);
-
-    void addTargetAzimuthLower(char ang);
-    void addTargetAzimuthUpper(char ang);
-    void setTargetAzimuthLower(char ang);
-    void setTargetAzimuthUpper(char ang);
-
-
-public:
-    volatile float getRefWithNorth() const;
-
-    void setRefWithNorth(volatile float refWithNorth);
-
-public:
-    volatile float getAlt() const;
-
-    void setAlt(volatile float alt);
-
-    volatile float getPhi() const;
-
-    void setPhi(volatile float phi);
-
-    volatile float getRange() const;
-
-    void setRange(volatile float range);
-
-private:
     volatile  bool elevationMotorOn;
     volatile bool azimuthMotorOn;
     volatile uint8_t speedDividerElevation;

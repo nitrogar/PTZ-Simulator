@@ -91,12 +91,15 @@ PTZUnit::PTZUnit(int id ,float filedOfView, float azimuthRotation, float azimuth
                                                                        {this->tick=1000;this->targetAngelElevation=ElevationRotation;
                                                                        this->targetAngelAzimuth=AzimuthRotation;
                                                                        this->speedDividerAzimuth = 1;
-                                                                       this->speedDividerElevation = 1;}
+                                                                       this->speedDividerElevation = 1;
+                                                                       this->SpeedElevation = 0;
+                                                                       this->SpeedAzimuth = 0;}
 
 PTZUnit::PTZUnit(){}
 
 void PTZUnit::setElevationSpeedFactor(char factor) {
         this->speedDividerElevation = factor;
+
 }
 
 void PTZUnit::setAzimuthSpeedFactor(char factor) {
@@ -120,25 +123,17 @@ void PTZUnit::log(char *  msg, char * location, WarningLevel level) {
     if(level == WarningLevel::ERROR) exit(1);
 }
 void PTZUnit::runSimulation(float timeElapsed) {
-          //  std::cout << "id : " << id << " Target Az : " << targetAngelAzimuth << " Target El " << targetAngelElevation << std::endl;
-            if (elevationMotorOn && this->getElevationSpeedFactor()!= 0){
-                if(abs(this->ElevationRotation - this->targetAngelElevation) > 0.01)
-                    if(this->ElevationRotation < this->targetAngelElevation)
-                        this->setElevationRotation(fmod((this->getElevationRotation() +(timeElapsed / 1000.0f) * this->getElevationRotationSpeed() *(1.0f / this->getElevationSpeedFactor())), 360.0f));
-                    else if( this->ElevationRotation > this->targetAngelElevation)
-                        this->setElevationRotation(fmod((this->getElevationRotation() -(timeElapsed / 1000.0f) * this->getElevationRotationSpeed() *(1.0f / this->getElevationSpeedFactor())), 360.0f));
-
-
-
+            if (elevationMotorOn && abs(SpeedElevation) > 0.1){
+                    this->setElevationRotation(fmod(this->getElevationRotation() +(timeElapsed / 1000.0f) * this->SpeedElevation, 360.0f));
+                    std::cout << "Y1 : "  << this->getElevationRotation() <<  std::endl;
             }
-            if (azimuthMotorOn && speedDividerAzimuth != 0){
-                if(abs(this->AzimuthRotation - this->targetAngelAzimuth) > 0.01)
-                    if(this->AzimuthRotation < this->targetAngelAzimuth)
-                        this->AzimuthRotation = fmod((this->AzimuthRotation + (timeElapsed / 1000.0f) * this->AzimuthRotationSpeed * (1.0f / this->speedDividerAzimuth)) , 360.0f);
-                    else if( this->AzimuthRotation > this->targetAngelAzimuth)
-                        this->AzimuthRotation = fmod((this->AzimuthRotation - (timeElapsed / 1000.0f) * this->AzimuthRotationSpeed * (1.0f / this->speedDividerAzimuth)) , 360.0f);
-
+            if (azimuthMotorOn && abs(SpeedAzimuth) > 0.1 ){
+                    float a = fmod(this->AzimuthRotation + (timeElapsed / 1000.0f) * this->SpeedAzimuth , 360.0f);
+                    if(a < 0) a+= 360;
+                    this->AzimuthRotation = a;
             }
+
+
 
 }
 
@@ -188,61 +183,109 @@ float PTZUnit::getTargetAngelElevation() const {
 }
 
 void PTZUnit::setTargetAngelElevation(float targetAngelElevation) {
-    PTZUnit::targetAngelElevation = targetAngelElevation;
+    PTZUnit::targetAngelElevation2 = targetAngelElevation;
 }
 
 void PTZUnit::addTargetElevationLower(char ang) {
     float fang = (float) ang;
     fang = fang / 100;
-    this->targetAngelElevation += fang;
+    this->targetAngelElevation2 += fang;
 }
 
 void PTZUnit::addTargetElevationUpper(char ang) {
     float fang = (float) ang;
-    this->targetAngelElevation += fang;
+    this->targetAngelElevation2 += fang;
 }
 
 void PTZUnit::setTargetElevationLower(char ang) {
-    int top = (int) this->targetAngelElevation;
+    int top = (int) this->targetAngelElevation2;
     float lower = (float)ang;
     lower = lower/100;
-    this->targetAngelElevation = (float)top + lower;
+    this->targetAngelElevation2 = (float)top + lower;
 }
 
 void PTZUnit::setTargetElevationUpper(char ang) {
     int top = (float) ang;
-    float lower = (float)(this->targetAngelElevation - (int) this->targetAngelElevation);
+    float lower = (float)(this->targetAngelElevation2 - (int) this->targetAngelElevation2);
 
-    this->targetAngelElevation = top + lower;
+    this->targetAngelElevation2 = top + lower;
 
 }
 
 void PTZUnit::addTargetAzimuthLower(char ang) {
     float fang = (float) ang;
     fang = fang / 100;
-    this->targetAngelAzimuth += ang;
+    this->targetAngelAzimuth2 += ang;
 }
 
 void PTZUnit::addTargetAzimuthUpper(char ang) {
     float fang = (float) ang;
    // std::cout << fang << std::endl;
-    this->targetAngelAzimuth += fang;
+    this->targetAngelAzimuth2 += fang;
 }
 
 void PTZUnit::setTargetAzimuthLower(char ang) {
-    int top = (int) this->targetAngelAzimuth;
+    int top = (int) this->targetAngelAzimuth2;
     float lower = (float)ang;
     lower = lower/100;
 
 
-    this->targetAngelAzimuth = (float)top + lower;
+    this->targetAngelAzimuth2 = (float)top + lower;
 }
 
 void PTZUnit::setTargetAzimuthUpper(char ang) {
     int top = (float) ang;
-    float lower = (float)(this->targetAngelAzimuth - (int) this->targetAngelAzimuth);
+    float lower = (float)(this->targetAngelAzimuth2 - (int) this->targetAngelAzimuth2);
 
-    this->targetAngelAzimuth = top + lower;
+    this->targetAngelAzimuth2 = top + lower;
+}
+
+void PTZUnit::loadAzimuth() {
+    this->targetAngelAzimuth = this->targetAngelAzimuth2;
+}
+
+void PTZUnit::loadElevation() {
+    this->targetAngelElevation = this->targetAngelElevation2;
+
+}
+
+void PTZUnit::setAzimuthSpeedLower(char sp) {
+    int top = (int) this->SpeedAzimuth2;
+    float lower = (float)sp;
+    lower = lower/100;
+
+    this->SpeedAzimuth2 = (float)top + lower;
+}
+
+void PTZUnit::setAzimuthSpeedUpper(char sp) {
+    int top = (float) sp;
+    float lower = (float)(this->SpeedAzimuth2 - (int) this->SpeedAzimuth2);
+    this->SpeedAzimuth2 = top + lower;
+}
+
+void PTZUnit::setElevationSpeedLower(char sp) {
+    int top = (int) this->SpeedElevation2;
+    float lower = (float)sp;
+    lower = lower/100;
+
+    this->SpeedElevation2 = (float)top + lower;
+}
+
+void PTZUnit::setElevationSpeedUpper(char sp) {
+    int top = (float) sp;
+    float lower = (float)(this->SpeedElevation2 - (int) this->SpeedElevation2);
+    this->SpeedElevation2 = top + lower;
+}
+
+void PTZUnit::loadAzimuthSpeed() {
+ //   std::cout << this->id << "LOAD AZ " << this->SpeedAzimuth2 << " ==> " << this->SpeedAzimuth << std::endl;
+    this->SpeedAzimuth = this->SpeedAzimuth2;
+
+}
+
+void PTZUnit::loadElevationSpeed() {
+    this->SpeedElevation = this->SpeedElevation2;
+
 }
 
 

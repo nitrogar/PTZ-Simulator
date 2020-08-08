@@ -260,6 +260,7 @@ Packet::pktFeedback  PTZSImulator::parse(Packet::pktCommand cmd) {
                    }
                    break;
                default:
+                   std::cout << cmd.peripheral_function;
                    log("Error defected packet Read/Peripheral_Function Unknown" , "PTZSimulator::parse",WarningLevel::WARNING);
            }
             break;
@@ -353,6 +354,50 @@ Packet::pktFeedback  PTZSImulator::parse(Packet::pktCommand cmd) {
                     PTZs[PTZIndex].addTargetElevationUpper(cmd.action);
                  //   log("ADD Elevation Upper ", __FUNCTION__ , INFORMATION);
                     break;
+
+                case Packet::PeripheralFunction::LOAD_TARGET_AZIMUTH :
+                    PTZs[PTZIndex].loadAzimuth();
+                    //   log("ADD Elevation Upper ", __FUNCTION__ , INFORMATION);
+                    break;
+
+                case Packet::PeripheralFunction::LOAD_TARGET_ELEVATION :
+                    PTZs[PTZIndex].loadElevation();
+                    //   log("ADD Elevation Upper ", __FUNCTION__ , INFORMATION);
+                    break;
+                case Packet::PeripheralFunction::SET_AZIMUTH_SPEED_FACTOR :
+                    PTZs[PTZIndex].setAzimuthSpeedFactor(cmd.action);
+                    //   log("ADD Elevation Upper ", __FUNCTION__ , INFORMATION);
+                    break;
+                case Packet::PeripheralFunction::SET_AZIMUTH_SPEED_LOWER :
+                    PTZs[PTZIndex].setAzimuthSpeedLower(cmd.action);
+                    //   log("ADD Elevation Upper ", __FUNCTION__ , INFORMATION);
+                    break;
+                case Packet::PeripheralFunction::SET_ELEVATION_SPEED_LOWER :
+                    PTZs[PTZIndex].setElevationSpeedLower(cmd.action);
+                    //   log("ADD Elevation Upper ", __FUNCTION__ , INFORMATION);
+                    break;
+
+                case Packet::PeripheralFunction::SET_AZIMUTH_SPEED_UPPER :
+                    PTZs[PTZIndex].setAzimuthSpeedUpper(cmd.action);
+                    //   log("ADD Elevation Upper ", __FUNCTION__ , INFORMATION);
+                    break;
+
+                case Packet::PeripheralFunction::SET_ELEVATION_SPEED_UPPER :
+                    PTZs[PTZIndex].setElevationSpeedUpper(cmd.action);
+                    //   log("ADD Elevation Upper ", __FUNCTION__ , INFORMATION);
+                    break;
+
+                case Packet::PeripheralFunction::LOAD_SPEED_AZIMUTH :
+                    PTZs[PTZIndex].loadAzimuthSpeed();
+                    //   log("ADD Elevation Upper ", __FUNCTION__ , INFORMATION);
+                    break;
+
+                case Packet::PeripheralFunction::LOAD_SPEED_ELEVATION :
+                    PTZs[PTZIndex].loadElevationSpeed();
+                    //   log("ADD Elevation Upper ", __FUNCTION__ , INFORMATION);
+                    break;
+                default:
+                    log("Error defected Write/Function Unknown" , __FUNCTION__,WarningLevel::WARNING);
             }
             break;
         default:
