@@ -123,14 +123,25 @@ void PTZUnit::log(char *  msg, char * location, WarningLevel level) {
     if(level == WarningLevel::ERROR) exit(1);
 }
 void PTZUnit::runSimulation(float timeElapsed) {
-            if (elevationMotorOn && abs(SpeedElevation) > 0.1){
-                    this->setElevationRotation(fmod(this->getElevationRotation() +(timeElapsed / 1000.0f) * this->SpeedElevation, 360.0f));
+            if (elevationMotorOn && (abs(currentSpeedEle) > 0.1 || abs(currentSpeedEle - SpeedElevation) > 0.1)){
+
+                    this->currentSpeedEle = accelerate(currentSpeedEle,SpeedElevation,acceleration);
+                    this->setElevationRotation(fmod(this->getElevationRotation() +(timeElapsed / 1000.0f) * this->currentSpeedEle, 360.0f));
                     std::cout << "Y1 : "  << this->getElevationRotation() <<  std::endl;
+
+                    if(this->ElevationRotation > 85)  this->ElevationRotation = 85;
+                    else if(this->ElevationRotation < -20) this->ElevationRotation = -20;
             }
-            if (azimuthMotorOn && abs(SpeedAzimuth) > 0.1 ){
-                    float a = fmod(this->AzimuthRotation + (timeElapsed / 1000.0f) * this->SpeedAzimuth , 360.0f);
+            if (azimuthMotorOn && (abs(currentSpeedAzm) > 0.1 || abs(currentSpeedAzm - SpeedAzimuth) > 0.1)){
+
+                this->currentSpeedAzm = accelerate(currentSpeedAzm,SpeedAzimuth,acceleration);
+
+                float a = fmod(this->AzimuthRotation + (timeElapsed / 1000.0f) * this->currentSpeedAzm , 360.0f);
                     if(a < 0) a+= 360;
                     this->AzimuthRotation = a;
+
+                std::cout << "X1 : "  << this->getElevationRotation() <<  std::endl;
+
             }
 
 
@@ -287,5 +298,13 @@ void PTZUnit::loadElevationSpeed() {
     this->SpeedElevation = this->SpeedElevation2;
 
 }
+
+float PTZUnit::accelerate(float current, float target, float step) {
+    if(current < target) current = (current + step) > target ? target : current + step;
+    else if(current > target ) current = (current - step) < target ? target : current - step;
+
+    return current;
+}
+
 
 

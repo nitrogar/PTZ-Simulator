@@ -65,6 +65,7 @@ public:
     void setAzimuthSpeedUpper(char sp);
     void setElevationSpeedLower(char sp);
     void setElevationSpeedUpper(char sp);
+    float accelerate(float current,float target,float step);
 private:
     int id;
     int tick;
@@ -88,6 +89,9 @@ private:
     float SpeedElevation;
     float SpeedAzimuth2;
     float SpeedElevation2;
+    float currentSpeedAzm = 0;
+    float currentSpeedEle = 0;
+    float acceleration = 25;
 
     volatile  bool elevationMotorOn;
     volatile bool azimuthMotorOn;
