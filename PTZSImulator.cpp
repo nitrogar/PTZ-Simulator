@@ -33,6 +33,7 @@ void PTZSImulator::run() {
             PTZs[i].runSimulation(this->tick);
         }
         drones[0].runSimulation(this->tick);
+
         std::this_thread::sleep_for(std::chrono::milliseconds(this->tick));
     };
 }
@@ -213,9 +214,19 @@ Packet::pktFeedback  PTZSImulator::parse(Packet::pktCommand cmd) {
                        case Packet::Action::AZIMUTH_SPEED:
                            data = PTZs[PTZIndex].getAzimuthRotationSpeed();
                            break;
+
+                       case Packet::Action::AZIMUTH_MAX_SPEED:
+                           data = PTZs[PTZIndex].getAzimuthRotationMaxSpeed();
+                           break;
+
                        case Packet::Action::ELEVATION_SPEED:
                            data = PTZs[PTZIndex].getElevationRotationSpeed();
                            break;
+
+                       case Packet::Action::ELEVATION_MAX_SPEED:
+                           data = PTZs[PTZIndex].getElevationRotationMaxSpeed();
+                           break;
+
                        case Packet::Action::ELEVATION_SPEED_FACTOR:
                            data = PTZs[PTZIndex].getElevationSpeedFactor();
                            break;

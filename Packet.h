@@ -48,6 +48,8 @@ namespace Packet {
         const char LATITUDE = 0x5;
         const char ELEVATION_SPEED = 0x6;
         const char AZIMUTH_SPEED = 0x7;
+        const char ELEVATION_MAX_SPEED = 0x26;
+        const char AZIMUTH_MAX_SPEED = 0x27;
         const char ELEVATION_SPEED_FACTOR = 0x8;
         const char AZIMUTH_SPEED_FACTOR = 0x9;
         const char FOV = 0x17;

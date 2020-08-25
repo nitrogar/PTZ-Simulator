@@ -18,7 +18,7 @@ float PTZUnit::getAzimuthRotation() const {
 }
 
 float PTZUnit::getAzimuthRotationSpeed() const {
-    return AzimuthRotationSpeed;
+    return currentSpeedAzm;
 }
 
 float PTZUnit::getElevationRotation() const {
@@ -34,7 +34,7 @@ float PTZUnit::getElevationSpeedFactor() const {
 
 
 float PTZUnit::getElevationRotationSpeed() const {
-    return ElevationRotationSpeed;
+    return currentSpeedEle;
 }
 
 float PTZUnit::getLat() const {
@@ -306,5 +306,12 @@ float PTZUnit::accelerate(float current, float target, float step) {
     return current;
 }
 
+float PTZUnit::getAzimuthRotationMaxSpeed() const {
+    return AzimuthRotationSpeed;
+}
+
+float PTZUnit::getElevationRotationMaxSpeed() const {
+    return ElevationRotationSpeed;
+}
 
 

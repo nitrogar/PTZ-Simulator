@@ -36,7 +36,7 @@ private:
     int simulationON;
     int receiveConnectionOn;
     int mainSocketFd;
-    int tick = 100;
+    int tick = 20;
     std::string listenAddress;
 
     /*

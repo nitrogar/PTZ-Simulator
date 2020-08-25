@@ -14,8 +14,11 @@ public:
     int saveInXML(std::string & filename) const;
     float getFiledOfView() const;
     float getAzimuthRotation() const;
+    float getAzimuthRotationMaxSpeed() const;
     float getAzimuthRotationSpeed() const;
+
     float getElevationRotation() const;
+    float getElevationRotationMaxSpeed() const;
     float getElevationRotationSpeed() const;
     float getLat() const;
     float getLon() const;
@@ -91,7 +94,7 @@ private:
     float SpeedElevation2;
     float currentSpeedAzm = 0;
     float currentSpeedEle = 0;
-    float acceleration = 25;
+    float acceleration = 4;
 
     volatile  bool elevationMotorOn;
     volatile bool azimuthMotorOn;
